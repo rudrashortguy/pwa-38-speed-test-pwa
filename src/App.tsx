@@ -1,0 +1,100 @@
+import React, { useState, useEffect } from 'react';
+
+export function App() {
+  const storageKey = 'pwa_38_speed_test_pwa_items';
+  const [items, setItems] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : ['$DEFAULT_ITEM', 'Tap below to add new records', 'Fully works offline!'];
+    } catch {
+      return ['$DEFAULT_ITEM'];
+    }
+  });
+  const [input, setInput] = useState('');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, storageKey]);
+
+  const addItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setItems([input.trim(), ...items]);
+    setInput('');
+  };
+
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="container">
+      <header>
+        <div>
+          <h1>$APP_NAME</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+            $DESCRIPTION
+          </p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+          <span className="badge">Portfolio PWA</span>
+          <span style={{ fontSize: '0.75rem', color: isOnline ? '#4ade80' : '#f87171' }}>
+            ● {isOnline ? 'Online' : 'Offline Mode'}
+          </span>
+        </div>
+      </header>
+
+      <div className="card">
+        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Interactive Workspace</h3>
+        <form onSubmit={addItem}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Add new entry..."
+          />
+          <button type="submit" style={{ width: '100%' }}>Add Item</button>
+        </form>
+      </div>
+
+      <div className="card" style={{ flex: 1 }}>
+        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Stored Entries ({items.length})</h3>
+        {items.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>No items yet. Add one above!</p>
+        ) : (
+          <ul>
+            {items.map((item, idx) => (
+              <li key={idx}>
+                <span>{item}</span>
+                <button
+                  onClick={() => removeItem(idx)}
+                  style={{ background: 'transparent', color: '#f87171', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <footer>
+        <p>$APP_NAME • Built with Vite, TypeScript & Workbox PWA</p>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
